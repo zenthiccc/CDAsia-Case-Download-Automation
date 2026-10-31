@@ -2,6 +2,9 @@
 
 ## 2026-10-31
 
+### GUI
+- "Clear" button in the Review cases tab resets the syllabus pick, folder name and case list (the list can be undone with Cmd/Ctrl+Z).
+
 ### Public release prep
 - CDAsia URL configurable via `CDASIA_URL` (replaces `cdasialink.md`).
 - Digest prompt and style sample moved to `templates/`; your own syllabi stay local (only `example-*` tracked).
