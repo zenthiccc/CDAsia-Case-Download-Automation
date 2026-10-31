@@ -115,6 +115,8 @@ class App(ctk.CTk):
         self.check_label.grid(row=0, column=0, sticky="ew")
         ctk.CTkButton(tools, text="Regenerate from syllabus", width=170, fg_color="transparent", border_width=1,
                       text_color=("gray10", "gray90"), command=lambda: self._load_cases(fresh=True)).grid(row=0, column=1)
+        ctk.CTkButton(tools, text="Clear", width=70, fg_color="transparent", border_width=1,
+                      text_color=("gray10", "gray90"), command=self._clear_cases).grid(row=0, column=2, padx=(8, 0))
         self.editor = ctk.CTkTextbox(review, font=MONO, wrap="none", undo=True)
         self.editor.grid(row=1, column=0, sticky="nsew")
         self.editor.bind("<KeyRelease>", lambda _: self._schedule_check())
@@ -176,6 +178,15 @@ class App(ctk.CTk):
         self.editor.edit_reset()
         self.tabs.set("Review cases")
         self._check(f"Loaded your saved cases.yaml from {dest.name}. " if saved else "")
+
+    def _clear_cases(self):
+        """Reset the syllabus pick, folder name and case list (the list is undoable with Cmd/Ctrl+Z)."""
+        self.syllabus_var.set("")
+        self.name_var.set("")
+        self.editor.delete("1.0", "end")
+        self.editor.focus_set()
+        self.check_label.configure(text="Cleared. Pick a syllabus above, or paste or type cases here.",
+                                   text_color=MUTED)
 
     def _schedule_check(self):
         if self.check_job:
