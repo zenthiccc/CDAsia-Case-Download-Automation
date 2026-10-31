@@ -1,5 +1,6 @@
 .venv/
 .cdasia_profile/
 downloads/
+settings.json
 __pycache__/
 .DS_Store

@@ -1,13 +1,19 @@
-"""Download case PDFs (with separate opinions) from CDAsia for every case in a cases.yaml.
+"""Download case PDFs (with separate opinions) from CDAsia for every case in a syllabus yaml.
 
-Usage:
-  .venv/bin/python cdasia_fetch.py                 # all cases in cases.yaml
-  .venv/bin/python cdasia_fetch.py --only Flores   # just the cases whose name contains "Flores"
-  .venv/bin/python cdasia_fetch.py --cases other.yaml --out other_folder
+Each run fills a "section folder" that lives outside this project:
+  <section>/cases/    the downloaded PDFs
+  <section>/digest/   for your digests
+  <section>/report.csv, <section>/cases.yaml (copy of the yaml used)
+
+Usage (or use gui.py / tui.py):
+  .venv/bin/python cdasia_fetch.py --cases syllabi/x.yaml --dest ~/Downloads/x
+  .venv/bin/python cdasia_fetch.py --cases syllabi/x.yaml --dest ~/Downloads/x --only Flores
 """
 import argparse
 import csv
+import json
 import re
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -20,7 +26,31 @@ from playwright.sync_api import sync_playwright
 HERE = Path(__file__).resolve().parent
 BASE = "https://cdasiaonline-com.ap2.proxy.openathens.net"
 PROFILE = HERE / ".cdasia_profile"
+SYLLABI = HERE / "syllabi"
+SETTINGS = HERE / "settings.json"  # remembers the UIs' last choices
 DELAY_S = 4  # pause between cases, to go easy on the site
+
+
+def load_settings():
+    try:
+        return json.loads(SETTINGS.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def save_settings(**values):
+    SETTINGS.write_text(json.dumps({**load_settings(), **values}, indent=2))
+
+
+def prepare_section(dest, cases_yaml):
+    """Create the section folder layout and keep a copy of the yaml it was built from."""
+    dest = Path(dest).expanduser()
+    for sub in ("cases", "digest"):
+        (dest / sub).mkdir(parents=True, exist_ok=True)
+    copy = dest / "cases.yaml"
+    if Path(cases_yaml).resolve() != copy.resolve():
+        shutil.copyfile(cases_yaml, copy)
+    return dest
 
 
 def search_url(**query):
@@ -47,14 +77,14 @@ def ensure_logged_in(page):
 
 
 def search(page, **query):
-    """Run a search and return the result rows as (row_handle, ref, title, date)."""
+    """Run a search and return the result rows as (row_handle, ref, title, date), or None on timeout."""
     page.goto(search_url(**query))
     try:
         page.wait_for_function(
             "document.querySelector('tbody tr') || /no (results|documents)|0 document/i.test(document.body.innerText)",
             timeout=30000)
     except PWTimeout:
-        return []
+        return None
     page.wait_for_timeout(1000)
     rows = []
     for r in page.query_selector_all("tbody tr"):
@@ -124,17 +154,23 @@ def download_case(ctx, page, row, dest):
         doc.close()
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cases", default=str(HERE / "cases.yaml"))
-    ap.add_argument("--out", default=str(HERE / "downloads"))
+    ap.add_argument("--cases", required=True, help="syllabus yaml listing the cases")
+    ap.add_argument("--dest", required=True, help="section folder to fill (created if missing)")
     ap.add_argument("--only", help="only cases whose name contains this text")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     cases = yaml.safe_load(Path(args.cases).read_text())
-    out = Path(args.out)
-    out.mkdir(parents=True, exist_ok=True)
+    out = prepare_section(args.dest, args.cases)
+    cases_dir = out / "cases"
     report_path = out / "report.csv"
+    print(f"Section folder: {out}", flush=True)
+    # Keep match/opinion details of already-downloaded cases from the last run's report.
+    previous = {}
+    if report_path.exists():
+        with report_path.open(newline="") as f:
+            previous = {r["file"]: r for r in csv.DictReader(f)}
 
     results = []
     with sync_playwright() as p:
@@ -147,24 +183,39 @@ def main():
             name = case["name"]
             if args.only and args.only.lower() not in name.lower():
                 continue
-            dest = out / f"{i:02d} - {safe_filename(name)}.pdf"
-            rec = {"no": i, "case": name, "status": "", "matched": "", "ref": "", "date": "",
+            dest = cases_dir / f"{i:02d} - {safe_filename(name)}.pdf"
+            rec = {"no": i, "case": name, "note": case.get("note", ""), "status": "", "matched": "", "ref": "", "date": "",
                    "opinions": "", "file": dest.name}
             if dest.exists():
                 print(f"[{i:02d}] {name}: already downloaded, skipping")
+                old = previous.get(dest.name, {})
+                rec.update({k: old.get(k, "") for k in ("matched", "ref", "date", "opinions")})
                 rec["status"] = "skipped (exists)"
                 results.append(rec)
                 continue
 
-            hits = []
+            hits, seen, timed_out = [], [], False
             for field, key in (("citation", "citation"), ("number", "gr")):
                 if case.get(key):
-                    hits = pick(search(page, **{field: case[key]}), case)
+                    rows = search(page, **{field: case[key]})
+                    if rows is None:
+                        timed_out = True
+                        continue
+                    seen += [f"{r[2]} ({r[1]}, {r[3]})" for r in rows[:3]]
+                    hits = pick(rows, case)
                     if hits:
                         break
             if not hits:
-                print(f"[{i:02d}] {name}: NOT FOUND")
-                rec["status"] = "not found"
+                # Say *why* so the fix is obvious: wrong `match` word, CDAsia lacks it, or the site hung.
+                if seen:
+                    rec["status"] = "not found: no result title matched `match`; CDAsia returned: " + "; ".join(seen)
+                elif timed_out:
+                    rec["status"] = "not found: search timed out (site slow, or logged out?) - rerun"
+                elif not (case.get("citation") or case.get("gr")):
+                    rec["status"] = "not found: no citation or gr in the yaml"
+                else:
+                    rec["status"] = "not found: CDAsia has no results for the citation or G.R. No. - download manually"
+                print(f"[{i:02d}] {name}: {rec['status']}")
                 results.append(rec)
                 continue
 
@@ -186,10 +237,13 @@ def main():
 
         ctx.close()
 
+    # Merge into the existing report so `--only` runs don't drop the other cases.
+    merged = {**previous, **{r["file"]: r for r in results}}
     with report_path.open("w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(results[0].keys()) if results else ["case"])
+        w = csv.DictWriter(f, fieldnames=list(results[0].keys()) if results else ["case"],
+                           restval="", extrasaction="ignore")
         w.writeheader()
-        w.writerows(results)
+        w.writerows(sorted(merged.values(), key=lambda r: int(r["no"])))
     bad = [r for r in results if not r["status"].endswith("ok") and not r["status"].startswith("skipped")]
     print(f"\nDone. {len(results) - len(bad)} ok/skipped, {len(bad)} need attention. Report: {report_path}")
     return 1 if bad else 0

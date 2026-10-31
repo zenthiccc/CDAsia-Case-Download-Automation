@@ -1,104 +1,122 @@
 # Cases for Art. VII Secs. 16-17 (from syllabus.md), in syllabus order.
 # Each case is searched by `citation` first, then by `gr` (G.R. No.) if that fails.
 # `match`: words that must appear in CDAsia's title (any one of the lists' entries is enough).
+# `note`: the prof's note from the syllabus (the text in parentheses); copied into report.csv.
 # `year`: optional, used to pick between several hits (e.g. a decision vs. a later resolution).
 
 - name: Government v. Springer
+  note: 'power to appoint as executive'
   citation: 50 Phil 259
   gr: "26979"
   match: [Springer]
   year: 1927
 
 - name: Velicaria-Garafil v. OP
+  note: 'revocation of midnight appointments'
   citation: 758 SCRA 414
   gr: "203372"
   match: [Velicaria]
   year: 2015
 
 - name: Pimentel v. Ermita
+  note: 'acting Secretaries'
   citation: 471 SCRA 587
   gr: "164978"
   match: [Pimentel]
   year: 2005
 
 - name: Sarmiento III v. Mison
+  note: '1st sentence – enumeration is limited; 3rd sentence – use of the word “alone” as mere lapsus; head of bureau; no CA confirmation'
   citation: 156 SCRA 549
   gr: "79974"
   match: [Mison]
   year: 1987
 
 - name: Bautista v. Salonga
+  note: '1st sentence – “other officers” whose appointments are vested in the President; CHR Chair; CA confirmation'
   citation: 172 SCRA 160   # syllabus says 172 SCRA 1260 (typo)
   gr: "86439"
   match: [Salonga]
   year: 1989
 
 - name: Quintos-Deles v. CA
+  note: '1st sentence - “other officers” whose appointments are vested in the President; sectoral representative; CA confirmation'
   citation: 177 SCRA 259
   gr: "83216"
   match: [Deles]
   year: 1989
 
 - name: Pobre v. Mendieta
+  note: '2nd sentence – “those whom the President may be authorized by law to appoint”; PRC Commissioner; no CA confirmation'
   citation: 224 SCRA 738
   gr: "106677"
   match: [Pobre]
   year: 1993
 
 - name: Flores v. Drilon
+  note: '2nd sentence – “all other officers whose appointments are not otherwise provided for by law, and those whom he may be authorized by law to appoint”; SBMA Chair and the Mayor of Olongapo City'
   gr: "104732"
   match: [Flores]
   year: 1993
 
 - name: Rufino v. Endriga
+  note: '2nd sentence – “whose appointments are not otherwise provided by law”'
   citation: 496 SCRA 13
   gr: "139554"
   match: [Rufino]
   year: 2006
 
 - name: Tarrosa v. Singson
+  note: 'CB Gov.; list is exclusive'
   citation: 232 SCRA 553
   gr: "111243"
   match: [Tarrosa]
   year: 1994
 
 - name: Calderon v. Carale (OPTIONAL)
+  note: 'NLRC; list is exclusive'
   citation: 208 SCRA 254
   gr: "91636"
   match: [Calderon]
   year: 1992
 
 - name: Lacson-Magallanes v. Pano
+  note: 'Presidential power to reverse decision of heads of executive positions; what is non-delegable is what the President has to exercise in person'
   citation: 21 SCRA 895   # syllabus says 21 SCRA 395
   gr: L-27811
   match: [Lacson]
   year: 1967
 
 - name: Ang-Angco v. Castillo
+  note: 'distinguish President’s power over “acts” and “person” of appointee in classified service'
   citation: 9 SCRA 619
   gr: L-17169
   match: [Ang-Angco]
   year: 1963
 
 - name: Villaluz v. Zaldivar
+  note: 'power to remove Presidential appointee in unclassified service'
   citation: 15 SCRA 710
   gr: L-22754
   match: [Villaluz]
   year: 1965
 
 - name: Joson v. Torres
+  note: 'power to discipline local officials'
   citation: 290 SCRA 279
   gr: "131255"
   match: [Joson]
   year: 1998
 
 - name: KMU v. Dir-Gen of NEDA
+  note: 'also under faithful execution clause'
   citation: 487 SCRA 623
   gr: "167798"
   match: [Kilusang Mayo Uno, KMU]
   year: 2006
 
 - name: Drilon v. Lim
+  note: 'power of DOJ Sec. to declare illegal a City Code is mere exercise of supervision'
   citation: 235 SCRA 135
   gr: "112497"
   match: [Drilon v. Lim, Lim]
