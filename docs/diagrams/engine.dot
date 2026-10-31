@@ -1,0 +1,39 @@
+// What cdasia_fetch.py does for each case. Render with ./render.sh
+digraph engine {
+  graph [rankdir=TB, bgcolor=white, fontname="Helvetica", fontsize=12, nodesep=0.35, ranksep=0.35, pad=0.3];
+  node  [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=10];
+  edge  [color="#555555", fontname="Helvetica", fontsize=9];
+  node  [width=2.2];
+
+  start  [label="next case in cases.yaml", shape=oval, fillcolor="#f5f5f5", color="#888888"];
+  exists [label="PDF already\nin cases/?", shape=diamond, fillcolor="#fff7e0", color="#c9a227"];
+  skip   [label="skipped (exists)\ncarry details from old report", fillcolor="#e8f6ec", color="#3c9a5f"];
+  cite   [label="search by citation"];
+  gr     [label="search by G.R. No."];
+  pick   [label="pick(): title has a match word\n→ prefer year → prefer decision\nover resolution"];
+  hit1   [label="any hit?", shape=diamond, fillcolor="#fff7e0", color="#c9a227"];
+  hit2   [label="any hit?", shape=diamond, fillcolor="#fff7e0", color="#c9a227"];
+  nf     [label="not found + reason\n(titles returned / no results /\ntimed out / no citation)", fillcolor="#fbeaea", color="#c0392b"];
+  open   [label="open result (new tab)\nclick download"];
+  dialog [label="Separate Opinions\ndialog?", shape=diamond, fillcolor="#fff7e0", color="#c9a227"];
+  all    [label="wait for list to settle\nSelect All · verify · Add Selected"];
+  save   [label="save cases/NN - name.pdf\nstatus ok (or check: N matches)", fillcolor="#e8f6ec", color="#3c9a5f"];
+  err    [label="error: …\n(run continues)", fillcolor="#fbeaea", color="#c0392b"];
+  report [label="merge into report.csv\nsleep DELAY_S", shape=oval, fillcolor="#f5f5f5", color="#888888"];
+
+  start -> exists;
+  exists -> skip [label="yes"];
+  exists -> cite [label="no"];
+  cite -> pick; pick -> hit1;
+  hit1 -> open [label="yes"];
+  hit1 -> gr [label="no / no citation"];
+  gr -> hit2 [label="pick()"];
+  hit2 -> open [label="yes"];
+  hit2 -> nf [label="no"];
+  open -> dialog;
+  dialog -> all [label="yes"];
+  dialog -> save [label="no: downloads\ndirectly"];
+  all -> save;
+  open -> err [style=dashed, label="exception"];
+  skip -> report; nf -> report; save -> report; err -> report;
+}

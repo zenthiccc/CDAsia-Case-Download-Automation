@@ -1,0 +1,26 @@
+// Modules and how they call each other. Render with ./render.sh
+digraph components {
+  graph [rankdir=TB, bgcolor=white, fontname="Helvetica", fontsize=12, nodesep=0.5, ranksep=0.55, pad=0.3];
+  node  [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=11];
+  edge  [color="#555555", fontname="Helvetica", fontsize=9];
+
+  gui    [label="gui.py\nCustomTkinter App"];
+  tui    [label="tui.py\nrich prompts"];
+  engine [label="cdasia_fetch.py\nprepare_section · draft_cases · main\nsearch · pick · download_case"];
+  parser [label="syllabus_parser.py\nto_yaml · validate"];
+  pw     [label="Playwright\npersistent Chromium", fillcolor="#f4e9f7", color="#8e5ea2"];
+  settings [label="settings.json\nlast folder + syllabus", shape=note, fillcolor="#f5f5f5", color="#888888"];
+  editor [label="$EDITOR", shape=ellipse, fillcolor="#f5f5f5", color="#888888"];
+
+  gui -> engine [label="subprocess\n(cdasia_fetch.py --dest --cases --syllabus)\nstdout → queue → log/progress", style=bold];
+  gui -> engine [label="import: prepare_section,\ndraft_cases, settings", style=dashed];
+  tui -> engine [label="import: engine.main(argv)\nin-process", style=bold];
+  gui -> parser [label="to_yaml, validate", style=dashed];
+  tui -> parser [label="to_yaml, validate", style=dashed];
+  tui -> editor [label="edit cases.yaml"];
+  engine -> parser [label="to_yaml, validate"];
+  engine -> pw;
+  gui -> settings [style=dashed, arrowhead=none];
+  tui -> settings [style=dashed, arrowhead=none];
+  {rank=same; gui; tui}
+}

@@ -1,0 +1,24 @@
+// How syllabus_parser.py classifies each line of pasted syllabus text. Render with ./render.sh
+digraph parser {
+  graph [rankdir=TB, bgcolor=white, fontname="Helvetica", fontsize=12, nodesep=0.4, ranksep=0.35, pad=0.3];
+  node  [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=10];
+  edge  [color="#555555", fontname="Helvetica", fontsize=9];
+
+  line  [label="next non-empty line", shape=oval, fillcolor="#f5f5f5", color="#888888"];
+  open  [label="previous line is a case\nwith an unclosed \"(\" ?", shape=diamond, fillcolor="#fff7e0", color="#c9a227"];
+  cont  [label="starts lowercase/punctuation,\nnot a bullet, no citation?", shape=diamond, fillcolor="#fff7e0", color="#c9a227"];
+  join  [label="append to previous case\n(wrapped note)", fillcolor="#e8f6ec", color="#3c9a5f"];
+  hascase [label="has citation\n(SCRA / PHIL / O.G. / bare vol page)\nor G.R. No.?", shape=diamond, fillcolor="#fff7e0", color="#c9a227"];
+  case  [label="case:\nname = text before citation\nnote = (…) after it\nyear = [YYYY] or date\nmatch = distinctive party words", fillcolor="#e8f6ec", color="#3c9a5f"];
+  check [label="# CHECK: comment\n(reporter assumed SCRA)", fillcolor="#fbeaea", color="#c0392b"];
+  head  [label="# heading comment\n(kept for context)", fillcolor="#f5f5f5", color="#888888"];
+
+  line -> open;
+  open -> cont [label="yes"];
+  open -> hascase [label="no"];
+  cont -> join [label="yes"];
+  cont -> hascase [label="no"];
+  hascase -> case [label="yes"];
+  hascase -> head [label="no"];
+  case -> check [style=dashed, label="bare citation"];
+}

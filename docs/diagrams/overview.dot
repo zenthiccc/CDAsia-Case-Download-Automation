@@ -1,0 +1,39 @@
+// Data flow: syllabus text to downloaded PDFs. Render with ./render.sh
+digraph overview {
+  graph [rankdir=LR, bgcolor=white, fontname="Helvetica", fontsize=12, nodesep=0.4, ranksep=0.5, pad=0.3];
+  node  [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=11];
+  edge  [color="#555555", fontname="Helvetica", fontsize=9];
+
+  syllabus [label="syllabus .md\n(pasted from the PDF)", shape=note, fillcolor="#fff7e0", color="#c9a227"];
+  you      [label="you\nreview / edit", shape=ellipse, fillcolor="#e8f6ec", color="#3c9a5f"];
+  cdasia   [label="CDAsia\n(OpenAthens proxy)", shape=cylinder, fillcolor="#f4e9f7", color="#8e5ea2"];
+
+  subgraph cluster_tool {
+    label="tool folder (this repo)"; style="rounded,dashed"; color="#999999"; fontcolor="#666666";
+    parser [label="syllabus_parser.py\nto_yaml()"];
+    ui     [label="gui.py / tui.py"];
+    engine [label="cdasia_fetch.py\nmain()"];
+    profile [label=".cdasia_profile/\n(login cookies)", shape=folder, fillcolor="#f5f5f5", color="#888888"];
+    tmpl   [label="templates/\nPROMPT.md · SAMPLE-DIGEST…", shape=note, fillcolor="#f5f5f5", color="#888888"];
+  }
+
+  subgraph cluster_section {
+    label="section folder (you name it, anywhere)"; style="rounded,dashed"; color="#999999"; fontcolor="#666666";
+    yaml   [label="cases.yaml", shape=note, fillcolor="#fff7e0", color="#c9a227"];
+    pdfs   [label="cases/*.pdf", shape=folder, fillcolor="#e8f6ec", color="#3c9a5f"];
+    report [label="report.csv", shape=note, fillcolor="#fff7e0", color="#c9a227"];
+    copies [label="syllabus.md · PROMPT.md\nSAMPLE-DIGEST… · digests/", shape=folder, fillcolor="#f5f5f5", color="#888888"];
+  }
+
+  syllabus -> parser [label="text"];
+  parser -> ui [label="draft yaml"];
+  ui -> you [dir=both, label="edit"];
+  ui -> yaml [label="prepare_section()"];
+  yaml -> engine;
+  engine -> cdasia [dir=both, label="search · download"];
+  profile -> engine [style=dashed, arrowhead=none];
+  engine -> pdfs;
+  engine -> report;
+  syllabus -> copies [style=dashed, label="copy"];
+  tmpl -> copies [style=dashed, label="copy if missing"];
+}
