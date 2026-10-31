@@ -121,7 +121,7 @@ def main():
     code = engine.main(["--dest", str(dest), "--cases", str(yaml_path), "--syllabus", str(syllabus)])
     console.rule("Report")
     show_report(dest / "report.csv")
-    console.print(f"[dim]Open the folder with:[/] open '{dest}'")
+    console.print(f"[dim]Section folder:[/] {engine.shown(dest)}")
     return code
 
 

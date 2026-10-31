@@ -1,6 +1,19 @@
+# Python
 .venv/
-.cdasia_profile/
-downloads/
-settings.json
 __pycache__/
+
+# Local state: browser session (login cookies!) and UI settings
+.cdasia_profile/
+.playwright/
+settings.json
+
+# Your own syllabi stay local; only the examples are shared
+syllabi/*
+!syllabi/example-*
+
+# Never publish downloaded cases
+*.pdf
+
+# Editor / OS / local agent tooling
 .DS_Store
+.agents/

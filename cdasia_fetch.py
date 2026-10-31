@@ -13,6 +13,7 @@ Usage (or use gui.py / tui.py, which let you review the generated yaml first):
 import argparse
 import csv
 import json
+import os
 import unicodedata
 import re
 import shutil
@@ -27,13 +28,21 @@ from playwright.sync_api import sync_playwright
 import syllabus_parser
 
 HERE = Path(__file__).resolve().parent
-BASE = "https://cdasiaonline-com.ap2.proxy.openathens.net"
+# CDAsia through the school's OpenAthens proxy. For another institution's proxy (or direct access),
+# set CDASIA_URL, e.g. CDASIA_URL=https://cdasiaonline.com
+BASE = os.environ.get("CDASIA_URL", "https://cdasiaonline-com.ap2.proxy.openathens.net").rstrip("/")
 PROFILE = HERE / ".cdasia_profile"
 SYLLABI = HERE / "syllabi"
 SETTINGS = HERE / "settings.json"  # remembers the UIs' last choices
 DELAY_S = 4  # pause between cases, to go easy on the site
-# Copied from this folder into every section folder, for writing the digests.
+TEMPLATES = HERE / "templates"  # copied into every section folder, for writing the digests
 DIGEST_FILES = ("PROMPT.md", "SAMPLE-DIGEST-STYLE-TO-FOLLOW.md")
+
+
+def shown(path):
+    """A path for printing, with the home folder as ~."""
+    path, home = Path(path), Path.home()
+    return f"~/{path.relative_to(home)}" if path.is_relative_to(home) else str(path)
 
 
 def load_settings():
@@ -57,8 +66,8 @@ def prepare_section(dest, cases_text, syllabus=None):
         shutil.copyfile(syllabus, dest / "syllabus.md")
     for name in DIGEST_FILES:
         # Don't overwrite: the section's copy may have been tailored.
-        if (HERE / name).exists() and not (dest / name).exists():
-            shutil.copyfile(HERE / name, dest / name)
+        if (TEMPLATES / name).exists() and not (dest / name).exists():
+            shutil.copyfile(TEMPLATES / name, dest / name)
     return dest
 
 
@@ -203,7 +212,7 @@ def main(argv=None):
     out = prepare_section(args.dest, text, args.syllabus)
     cases_dir = out / "cases"
     report_path = out / "report.csv"
-    print(f"Section folder: {out}", flush=True)
+    print(f"Section folder: {shown(out)}", flush=True)
     # Keep match/opinion details of already-downloaded cases from the last run's report.
     previous = {}
     if report_path.exists():
@@ -283,7 +292,7 @@ def main(argv=None):
         w.writeheader()
         w.writerows(sorted(merged.values(), key=lambda r: int(r["no"])))
     bad = [r for r in results if not r["status"].endswith("ok") and not r["status"].startswith("skipped")]
-    print(f"\nDone. {len(results) - len(bad)} ok/skipped, {len(bad)} need attention. Report: {report_path}")
+    print(f"\nDone. {len(results) - len(bad)} ok/skipped, {len(bad)} need attention. Report: {shown(report_path)}")
     return 1 if bad else 0
 
 

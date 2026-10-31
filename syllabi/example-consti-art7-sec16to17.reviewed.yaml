@@ -1,4 +1,5 @@
-# Cases for Art. VII Secs. 16-17 (from syllabus.md), in syllabus order.
+# Example of a reviewed case list: generated from example-consti-art7-sec16to17.md, then corrected by hand
+# (typo'd citations fixed, G.R. Nos. added as fallbacks, match words narrowed). In syllabus order.
 # Each case is searched by `citation` first, then by `gr` (G.R. No.) if that fails.
 # `match`: words that must appear in CDAsia's title (any one of the lists' entries is enough).
 # `note`: the prof's note from the syllabus (the text in parentheses); copied into report.csv.

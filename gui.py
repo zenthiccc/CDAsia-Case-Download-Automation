@@ -5,6 +5,7 @@
 Pick a syllabus .md; its case list is turned into yaml and shown for checking/editing. Download then
 runs cdasia_fetch.py in a child process, so the window stays responsive and Stop can end it.
 """
+import os
 import queue
 import re
 import subprocess
@@ -22,7 +23,7 @@ ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
 
 PAD = 16
-MONO = ("SF Mono", 12)
+MONO = ("Menlo" if sys.platform == "darwin" else "Consolas" if sys.platform == "win32" else "DejaVu Sans Mono", 12)
 OTHER = "Browse for a file..."
 MUTED = ("gray40", "gray65")
 
@@ -110,7 +111,7 @@ class App(ctk.CTk):
         tools = ctk.CTkFrame(review, fg_color="transparent")
         tools.grid(row=0, column=0, sticky="ew", pady=(0, 6))
         tools.grid_columnconfigure(0, weight=1)
-        self.check_label = ctk.CTkLabel(tools, text="", anchor="w", justify="left", wraplength=560)
+        self.check_label = ctk.CTkLabel(tools, text="", anchor="w", justify="left", wraplength=640)
         self.check_label.grid(row=0, column=0, sticky="ew")
         ctk.CTkButton(tools, text="Regenerate from syllabus", width=170, fg_color="transparent", border_width=1,
                       text_color=("gray10", "gray90"), command=lambda: self._load_cases(fresh=True)).grid(row=0, column=1)
@@ -193,7 +194,7 @@ class App(ctk.CTk):
         checks = text.count("# CHECK:")
         msg = f"{prefix}✓ {len(cases)} cases. Check names, citations and match words, edit if needed, then Download."
         if checks:
-            msg += f"  {checks} line(s) marked # CHECK."
+            msg += f"  {checks} guess(es) marked #\u00a0CHECK."
         self.check_label.configure(text=msg, text_color=("#1e8449", "#2ecc71"))
         return cases
 
@@ -208,8 +209,12 @@ class App(ctk.CTk):
 
     def _update_preview(self):
         dest = self._dest()
-        self.preview.configure(text=f"→  {dest}/  cases · digests · cases.yaml · syllabus.md · PROMPT.md"
-                               if dest else "Enter a folder name")
+        if dest:
+            home = str(Path.home())
+            shown = "~" + str(dest)[len(home):] if str(dest).startswith(home) else str(dest)
+            self.preview.configure(text=f"→  {shown}/  cases · digests · cases.yaml · syllabus.md · PROMPT.md")
+        else:
+            self.preview.configure(text="Enter a folder name")
 
     # --- running ------------------------------------------------------------
     def _run(self):
@@ -301,7 +306,10 @@ class App(ctk.CTk):
     def _open_folder(self):
         dest = getattr(self, "dest", None) or self._dest()
         target = dest if dest and dest.exists() else Path(self.parent_var.get()).expanduser()
-        subprocess.run(["open", str(target)])
+        if sys.platform == "win32":
+            os.startfile(target)
+        else:
+            subprocess.run(["open" if sys.platform == "darwin" else "xdg-open", str(target)])
 
     def _close(self):
         self._stop()
