@@ -40,7 +40,7 @@ compile them based on following on the format below:
 FORMAT:
 font size: 11
 
-[Name of the case based on the syllabus.md (exclude GR. details/citations just the title e.g Manglapus v. Ermita)] - in bold and highlighted in yellow
+[Name of the case based on the syllabus.md + (prof's note on the case if exists)] exclude GR. details/citations just the title (e.g Manglapus v. Ermita (prof's note)) - in bold and highlighted in yellow
 -- Actual Case Digest ---
 
 [Spacing here for the next case]
