@@ -1,17 +1,19 @@
-"""Download case PDFs (with separate opinions) from CDAsia for every case in a syllabus yaml.
+"""Download case PDFs (with separate opinions) from CDAsia for every case in a syllabus.
 
 Each run fills a "section folder" that lives outside this project:
-  <section>/cases/    the downloaded PDFs
-  <section>/digest/   for your digests
-  <section>/report.csv, <section>/cases.yaml (copy of the yaml used)
+  <section>/cases/      the downloaded PDFs
+  <section>/digests/    for your digests
+  <section>/cases.yaml  the case list (generated from the syllabus, then checked/edited)
+  <section>/syllabus.md, PROMPT.md, SAMPLE-DIGEST-STYLE-TO-FOLLOW.md, report.csv
 
-Usage (or use gui.py / tui.py):
-  .venv/bin/python cdasia_fetch.py --cases syllabi/x.yaml --dest ~/Downloads/x
-  .venv/bin/python cdasia_fetch.py --cases syllabi/x.yaml --dest ~/Downloads/x --only Flores
+Usage (or use gui.py / tui.py, which let you review the generated yaml first):
+  .venv/bin/python cdasia_fetch.py --syllabus syllabi/x.md --dest ~/Downloads/x
+  .venv/bin/python cdasia_fetch.py --cases my.yaml --dest ~/Downloads/x --only Flores
 """
 import argparse
 import csv
 import json
+import unicodedata
 import re
 import shutil
 import sys
@@ -19,9 +21,10 @@ import time
 from pathlib import Path
 from urllib.parse import urlencode
 
-import yaml
 from playwright.sync_api import TimeoutError as PWTimeout
 from playwright.sync_api import sync_playwright
+
+import syllabus_parser
 
 HERE = Path(__file__).resolve().parent
 BASE = "https://cdasiaonline-com.ap2.proxy.openathens.net"
@@ -29,6 +32,8 @@ PROFILE = HERE / ".cdasia_profile"
 SYLLABI = HERE / "syllabi"
 SETTINGS = HERE / "settings.json"  # remembers the UIs' last choices
 DELAY_S = 4  # pause between cases, to go easy on the site
+# Copied from this folder into every section folder, for writing the digests.
+DIGEST_FILES = ("PROMPT.md", "SAMPLE-DIGEST-STYLE-TO-FOLLOW.md")
 
 
 def load_settings():
@@ -42,15 +47,30 @@ def save_settings(**values):
     SETTINGS.write_text(json.dumps({**load_settings(), **values}, indent=2))
 
 
-def prepare_section(dest, cases_yaml):
-    """Create the section folder layout and keep a copy of the yaml it was built from."""
+def prepare_section(dest, cases_text, syllabus=None):
+    """Create the section folder layout and write its cases.yaml, syllabus.md and digest files."""
     dest = Path(dest).expanduser()
-    for sub in ("cases", "digest"):
+    for sub in ("cases", "digests"):
         (dest / sub).mkdir(parents=True, exist_ok=True)
-    copy = dest / "cases.yaml"
-    if Path(cases_yaml).resolve() != copy.resolve():
-        shutil.copyfile(cases_yaml, copy)
+    (dest / "cases.yaml").write_text(cases_text)
+    if syllabus and Path(syllabus).resolve() != (dest / "syllabus.md").resolve():
+        shutil.copyfile(syllabus, dest / "syllabus.md")
+    for name in DIGEST_FILES:
+        # Don't overwrite: the section's copy may have been tailored.
+        if (HERE / name).exists() and not (dest / name).exists():
+            shutil.copyfile(HERE / name, dest / name)
     return dest
+
+
+def draft_cases(syllabus, dest):
+    """The yaml to review for a syllabus: the folder's saved cases.yaml if it was made from this same
+    syllabus (keeps your edits), else a fresh parse. Returns (text, came_from_folder)."""
+    syllabus, dest = Path(syllabus), Path(dest).expanduser()
+    text = syllabus.read_text()
+    saved, copy = dest / "cases.yaml", dest / "syllabus.md"
+    if saved.exists() and copy.exists() and copy.read_text() == text:
+        return saved.read_text(), True
+    return syllabus_parser.to_yaml(text, syllabus.name), False
 
 
 def search_url(**query):
@@ -94,10 +114,15 @@ def search(page, **query):
     return rows
 
 
+def fold(s):
+    """Lowercase without accents, so "Pano" matches "Paño"."""
+    return unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
+
+
 def pick(rows, case):
     """Choose the result row that matches the case's title keywords (and year, if given)."""
-    keys = [k.lower() for k in case.get("match", [])]
-    hits = [r for r in rows if any(k in r[2].lower() for k in keys)] if keys else rows
+    keys = [fold(k) for k in case.get("match", [])]
+    hits = [r for r in rows if any(k in fold(r[2]) for k in keys)] if keys else rows
     if case.get("year"):
         by_year = [r for r in hits if str(case["year"]) in r[3]]
         hits = by_year or hits
@@ -156,13 +181,26 @@ def download_case(ctx, page, row, dest):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cases", required=True, help="syllabus yaml listing the cases")
     ap.add_argument("--dest", required=True, help="section folder to fill (created if missing)")
+    ap.add_argument("--syllabus", help="syllabus .md; copied into the folder, and parsed if there's no yaml")
+    ap.add_argument("--cases", help="cases yaml (default: <dest>/cases.yaml, else generated from --syllabus)")
     ap.add_argument("--only", help="only cases whose name contains this text")
     args = ap.parse_args(argv)
 
-    cases = yaml.safe_load(Path(args.cases).read_text())
-    out = prepare_section(args.dest, args.cases)
+    existing = Path(args.dest).expanduser() / "cases.yaml"
+    if args.cases:
+        text = Path(args.cases).read_text()
+    elif existing.exists():
+        text = existing.read_text()
+    elif args.syllabus:
+        text = syllabus_parser.to_yaml(Path(args.syllabus).read_text(), Path(args.syllabus).name)
+    else:
+        ap.error("give --syllabus or --cases")
+    try:
+        cases = syllabus_parser.validate(text)
+    except ValueError as e:
+        ap.error(f"cases yaml: {e}")
+    out = prepare_section(args.dest, text, args.syllabus)
     cases_dir = out / "cases"
     report_path = out / "report.csv"
     print(f"Section folder: {out}", flush=True)
