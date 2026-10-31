@@ -1,0 +1,115 @@
+# Cases for Art. VII Secs. 16-17 (from syllabus.md), in syllabus order.
+# Each case is searched by `citation` first, then by `gr` (G.R. No.) if that fails.
+# `match`: words that must appear in CDAsia's title (any one of the lists' entries is enough).
+# `year`: optional, used to pick between several hits (e.g. a decision vs. a later resolution).
+
+- name: Government v. Springer
+  citation: 50 Phil 259
+  gr: "26979"
+  match: [Springer]
+  year: 1927
+
+- name: Velicaria-Garafil v. OP
+  citation: 758 SCRA 414
+  gr: "203372"
+  match: [Velicaria]
+  year: 2015
+
+- name: Pimentel v. Ermita
+  citation: 471 SCRA 587
+  gr: "164978"
+  match: [Pimentel]
+  year: 2005
+
+- name: Sarmiento III v. Mison
+  citation: 156 SCRA 549
+  gr: "79974"
+  match: [Mison]
+  year: 1987
+
+- name: Bautista v. Salonga
+  citation: 172 SCRA 160   # syllabus says 172 SCRA 1260 (typo)
+  gr: "86439"
+  match: [Salonga]
+  year: 1989
+
+- name: Quintos-Deles v. CA
+  citation: 177 SCRA 259
+  gr: "83216"
+  match: [Deles]
+  year: 1989
+
+- name: Pobre v. Mendieta
+  citation: 224 SCRA 738
+  gr: "106677"
+  match: [Pobre]
+  year: 1993
+
+- name: Flores v. Drilon
+  gr: "104732"
+  match: [Flores]
+  year: 1993
+
+- name: Rufino v. Endriga
+  citation: 496 SCRA 13
+  gr: "139554"
+  match: [Rufino]
+  year: 2006
+
+- name: Tarrosa v. Singson
+  citation: 232 SCRA 553
+  gr: "111243"
+  match: [Tarrosa]
+  year: 1994
+
+- name: Calderon v. Carale (OPTIONAL)
+  citation: 208 SCRA 254
+  gr: "91636"
+  match: [Calderon]
+  year: 1992
+
+- name: Lacson-Magallanes v. Pano
+  citation: 21 SCRA 895   # syllabus says 21 SCRA 395
+  gr: L-27811
+  match: [Lacson]
+  year: 1967
+
+- name: Ang-Angco v. Castillo
+  citation: 9 SCRA 619
+  gr: L-17169
+  match: [Ang-Angco]
+  year: 1963
+
+- name: Villaluz v. Zaldivar
+  citation: 15 SCRA 710
+  gr: L-22754
+  match: [Villaluz]
+  year: 1965
+
+- name: Joson v. Torres
+  citation: 290 SCRA 279
+  gr: "131255"
+  match: [Joson]
+  year: 1998
+
+- name: KMU v. Dir-Gen of NEDA
+  citation: 487 SCRA 623
+  gr: "167798"
+  match: [Kilusang Mayo Uno, KMU]
+  year: 2006
+
+- name: Drilon v. Lim
+  citation: 235 SCRA 135
+  gr: "112497"
+  match: [Drilon v. Lim, Lim]
+  year: 1994
+
+- name: Almario v. Executive Secretary (National Artist)
+  gr: "189028"
+  match: [Almario]
+  year: 2013
+
+- name: Ocampo v. Enriquez
+  gr: "225973"
+  match: [Ocampo]
+  year: 2016
